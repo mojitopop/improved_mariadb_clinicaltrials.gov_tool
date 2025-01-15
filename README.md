@@ -16,4 +16,5 @@ List of changes :
  - regex the lead sponsors / orgas names in order to refine the class OTHER into UNIVERSITY,HOSPITAL and NETWORK
  - format dates to YYYY-MM-DD
  - fetch THEORICAL ENROLLMENT COUNT, instead of just LAST ENROLLMENT COUNT ( if you want to do predictive models and it sees a Phase 3 trial with only 5 patients it'll obviously knows it's a TERMINATED trial => data leakage )
- - proper 
+ - location of the trial : for multi-centers trials, instead of assigning the first center's location in the list as the official country, we will take the location of the responsible party and use an external GoogleMapsGeocoding API to determine the country of the trial.
+ 
