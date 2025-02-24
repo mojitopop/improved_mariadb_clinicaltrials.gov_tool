@@ -90,7 +90,7 @@ def fetch_and_update(c):
     total = len(rows)
     if len(rows) == 0:
         print("No rows to process")
-        return
+        return False
     for row in rows:
         i+=1
         nct_id = row[0] if row else None
@@ -237,8 +237,9 @@ def fetch_and_update(c):
                 
                 
                 
-while True :                
-    fetch_and_update(c)             
+while True:
+    if not fetch_and_update(c):
+        break  
 
 
     
