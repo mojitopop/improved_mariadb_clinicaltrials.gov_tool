@@ -8,7 +8,7 @@ import time
 import subprocess
 import requests
 import argparse
-import pandas as pd
+import datetime
 from sqlalchemy import create_engine
 
 # Define the database name once for all the connections dict of the script
@@ -564,7 +564,21 @@ def parse_json(data,conn):
 
             clinical_trial.lastUpdateSubmitDate = format_date(status_module.get("lastUpdateSubmitDate",""))
             clinical_trial.why_stopped = status_module.get("whyStopped", None)
-
+            
+        ############## check if update is needed for the trial
+        c = conn.cursor()
+        c.execute("SELECT lastUpdateSubmitDate FROM clinicaltrial WHERE nct_id = ?",(clinical_trial.nct_id,))
+        last_update = c.fetchone()
+        current_date = datetime.datetime.strptime(clinical_trial.lastUpdateSubmitDate, '%Y-%m-%d').date()
+        if last_update is not None:
+            last_update_date = last_update[0]
+            if last_update_date == current_date:
+                print(f"Trial {clinical_trial.nct_id} is up to date")
+                return None
+        if last_update is not None:
+            print(f"Updating trial {clinical_trial.nct_id} from {last_update_date} to {current_date}")
+        else:
+            print(f"Creating trial {clinical_trial.nct_id}")
 
 
         ##### if responsibleparty = sponsor = get address from overallofficial contact
@@ -1197,10 +1211,28 @@ def updating_values():
     conn.close()
         
         
-    
+def last_update_date(trial,conn):
+    c = conn.cursor()
+    c.execute("SELECT lastUpdateSubmitDate FROM clinicaltrial WHERE nct_id = ?", (trial.nct_id,))
+    last_update = c.fetchone()
+    if last_update is None:
+        print("New trial", trial.nct_id)
+        return True
+    # convert the string YYY-MM-DD to datetime.date
+    current_date = datetime.datetime.strptime(trial.lastUpdateSubmitDate, '%Y-%m-%d').date()
+    #print(f"last update date for {trial.nct_id} is {last_update[0]} vs current date {current_date}")
+    if last_update[0]<current_date:
+        print(f"{trial.nct_id} : updating version {last_update[0]} to {current_date}")
+        return True
+    if last_update[0]>=current_date:
+        print("last update date already up to date for", trial.nct_id)
+        return False
+    else:
+        print("No last update date found for", trial.nct_id)
+        return True
 
 
-size = 100
+size = 1000
 
 def fetch_content(page_token):
     #url = 'https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=1000'
@@ -1224,7 +1256,8 @@ def fetch_content(page_token):
             port=3306,
             database=database)
             trial = parse_json(data,conn)
-            insert_into_database(trial,conn)
+            if trial:
+                insert_into_database(trial,conn)
         conn.commit() 
         
 
