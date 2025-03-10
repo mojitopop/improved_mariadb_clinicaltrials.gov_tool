@@ -1095,6 +1095,14 @@ def updating_values():
         """, (count, nct_id[0]))
 
         conn.commit()
+        # Update the number_of_collaborators column
+        cursor.execute("""
+            UPDATE clinicaltrial 
+            SET number_of_collaborators = ? 
+            WHERE nct_id = ? AND number_of_collaborators IS NULL
+        """, (count, nct_id[0]))
+
+        conn.commit()
 
     # Update number_of_collaborators in the clinical_trial table using only the first row with the same nct_id
     c.execute("""
